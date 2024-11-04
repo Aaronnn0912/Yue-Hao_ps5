@@ -1,0 +1,123 @@
+---
+title: "ps5"
+date: "2024-11-06"
+format: 
+  html: 
+    code-overlap: wrap
+    code-block-font-size: 0.8em
+execute:
+  eval: true
+  echo: true
+---
+
+## Submission Steps (10 pts)
+
+1. **This problem set is a paired problem set.**
+2. **Determine Partner Roles**
+   - Play paper, scissors, rock to decide who is Partner 1.
+     - **Partner 1 (name and cnet ID)**: Yue Wang, yuew3
+     - **Partner 2 (name and cnet ID)**: Zhuohao Yang, zhuohao
+3. **Link Sharing**
+   - Partner 1 will accept the problem set and share the link with Partner 2.
+   - Note: The link can only be shared once, and cannot be changed after acceptance.
+4. **Integrity Statement**
+   - “This submission is our work alone and complies with the 30538 integrity policy.”
+     - Initials of Partner 1: **“This submission is our work alone and complies with the 30538 integrity policy.”**
+     - Initials of Partner 2: **“This submission is our work alone and complies with the 30538 integrity policy.”**
+5. **Collaboration Disclosure**
+   - “I have uploaded the names of anyone else, other than my partner, I worked with on the problem set here.”
+   - [Provide details if applicable]
+6. **Late Coins**
+   - Late coins used for this pset: **[Number of late coins used]**
+   - Late coins left after submission: **[Number of late coins remaining]**
+7. **Knit to PDF**
+   - Knit `ps5.qmd` to create `ps5.pdf`.
+   - Ensure that the PDF does not exceed 25 pages. Use `head()` and re-size figures as needed.
+8. **GitHub Submission**
+   - **Partner 1**: Push `ps5.qmd` and `ps5.pdf` to your GitHub repository.
+9. **Gradescope Submission**
+   - **Partner 1**: Submit `ps5.pdf` on Gradescope and add your partner as a collaborator.
+10. **Tagging**
+    - **Partner 1**: Tag the submission in Gradescope.
+
+
+```{python}
+#Set up
+import pandas as pd
+import warnings
+warnings.filterwarnings("ignore", category=pd.errors.DtypeWarning)
+```
+
+# Step 1: Develop initial scraper and crawler
+## Q1
+```{python, include: false}
+
+```
+
+
+## Q2
+```{python}
+
+```
+
+
+# Step 2: Making the scraper dynamic
+## Q1 
+### a
+```{python}
+
+```
+
+
+### b
+```{python}
+
+
+```
+
+### c
+```{python}
+
+
+```
+
+# Step 3: Plot data based on scraped data (using altair)
+## Q1
+```{python}
+
+
+```
+
+## Q2
+```{python}
+
+```
+
+# Step 4: Create maps of enforcement activity
+## Q1
+```{python}
+
+
+```
+
+## Q2
+```{python}
+
+```
+
+# Extra credit: Calculate the enforcement actions on a per-capita basis
+## Q1
+```{python}
+
+
+```
+
+## Q2
+```{python}
+
+```
+
+## Q3
+```{python}
+
+```
