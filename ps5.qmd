@@ -44,15 +44,117 @@ execute:
 ```{python}
 #Set up
 import pandas as pd
-import warnings
-warnings.filterwarnings("ignore", category=pd.errors.DtypeWarning)
+import altair as alt
+import time
+import requests
+from bs4 import BeautifulSoup
+import lxml
+import re
+import warnings 
+warnings.filterwarnings('ignore')
+alt.renderers.enable("png")
 ```
 
 # Step 1: Develop initial scraper and crawler
 ## Q1
-```{python, include: false}
+
+```{python}
+### URL 
+url = 'https://oig.hhs.gov/fraud/enforcement/'
+
+# Fetch the webpage content
+response = requests.get(url)
+html_content = response.text
+
+# Use BeautifulSoup to parse the HTML
+soup = BeautifulSoup(html_content, 'html.parser')
+
+### Scripting Title of the enforcement action
+# Find all elements that are headings (h1 to h6)
+headings = soup.find_all(re.compile('^h[1-6]$'))
+
+# Create a list to hold all extracted headings
+extracted_headings = []
+for heading in headings:
+    extracted_headings.append((heading.name, heading.get_text(strip=True)))
+
+# Print out all headings found
+for tag, text in extracted_headings:
+    print(f'{tag}: {text}')
+
+
+### Scripting Date
+def scrape_dates():
+    # URL of the page you want to scrape
+    url = 'https://oig.hhs.gov/fraud/enforcement/'
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, 'html.parser')
+    
+    # Find all span tags that contain dates
+    date_spans = soup.find_all('span', class_='text-base-dark padding-right-105')
+    
+    # Extract the text from each span tag (the dates)
+    dates = [span.get_text(strip=True) for span in date_spans]
+    
+    # Create a DataFrame to store the collected dates
+    df = pd.DataFrame(dates, columns=['Date'])
+
+    return df
+
+# Run the function and print the DataFrame
+df_dates = scrape_dates()
+print(df_dates)
+
+
+def scrape_checkbox_data():
+    # URL
+    url = 'https://oig.hhs.gov/fraud/enforcement/'
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, 'html.parser')
+    
+    # Extract checkbox related data
+    checkboxes = soup.find_all('input', type='checkbox')
+    data = [{
+        'Type': box.find_next_sibling('label').get_text(strip=True) if box.find_next_sibling('label') else 'No Label',
+        'Link': box.get('value', 'No Link Provided')
+    } for box in checkboxes]
+    
+    # Return as DataFrame
+    return pd.DataFrame(data)
+
+# Run the function and print the DataFrame
+df_checkboxes = scrape_checkbox_data()
+print(df_checkboxes)
+
+def scrape_hyperlinks(url):
+    # Sending a request to the webpage
+    response = requests.get(url)
+    if response.status_code != 200:
+        return pd.DataFrame()  # Return an empty DataFrame if there's an error loading the page
+    
+    # Parsing the HTML content
+    soup = BeautifulSoup(response.text, 'html.parser')
+    
+    # Find all <a> tags
+    links = soup.find_all('a')
+    
+    # Extract the href attribute and text from each <a> tag
+    data = [{
+        'Text': link.get_text(strip=True),
+        'URL': link.get('href')
+    } for link in links if link.get('href')]
+
+    # Create a DataFrame to store the collected data
+    return pd.DataFrame(data)
+
+# Example usage
+base_url = 'https://example.com'  # Replace with the actual URL
+df_links = scrape_hyperlinks(base_url)
+print(df_links)
 
 ```
+
+
 
 
 ## Q2
