@@ -159,6 +159,49 @@ print(df_links)
 
 ## Q2
 ```{python}
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+
+def fetch_agency_names(url):
+    # Send a request to the webpage
+    response = requests.get(url)
+    response.raise_for_status()  # Raises an HTTPError for bad responses
+
+    # Parse the page with BeautifulSoup
+    soup = BeautifulSoup(response.text, 'html.parser')
+
+    # Find all links to enforcement actions, assuming they are contained in <a> tags under a specific class or id
+    links = soup.find_all('a', class_='your-link-class')  # Update 'your-link-class' as necessary
+
+    agencies = []
+
+    # Loop through each link and fetch the agency name
+    for link in links:
+        # Construct the full URL for the enforcement action
+        action_url = url + link.get('href')
+
+        # Fetch the detail page
+        detail_response = requests.get(action_url)
+        detail_response.raise_for_status()
+
+        # Parse the detail page
+        detail_soup = BeautifulSoup(detail_response.text, 'html.parser')
+
+        # Extract the agency name, assuming it's in the third <p> tag under <div class="content">
+        content_div = detail_soup.find('div', class_='content')
+        if content_div:
+            agency_name = content_div.find_all('p')[2].text  # Get the third <p> tag
+            agencies.append(agency_name)
+
+    # Create a DataFrame
+    df = pd.DataFrame(agencies, columns=['Agency'])
+    return df
+
+# URL of the 'Enforcement Actions' page
+url = 'https://oig.hhs.gov/fraud/enforcement/washington-doctor-settles-allegations-he-submitted-false-claims-to-federal-health-care-programs/'
+df_agencies = fetch_agency_names(url)
+print(df_agencies.head())
 
 ```
 
