@@ -57,151 +57,123 @@ alt.renderers.enable("png")
 
 # Step 1: Develop initial scraper and crawler
 ## Q1
-
 ```{python}
-### URL 
-url = 'https://oig.hhs.gov/fraud/enforcement/'
+# Initialize lists to store data
+categories = []
+titles = []
+dates = []
+links = []
 
-# Fetch the webpage content
-response = requests.get(url)
-html_content = response.text
+# Set the target webpage URL
+base_url = 'https://oig.hhs.gov/fraud/enforcement/'  # Base URL for enforcement actions
 
-# Use BeautifulSoup to parse the HTML
-soup = BeautifulSoup(html_content, 'html.parser')
+# Send an HTTP request to the base URL
+response = requests.get(base_url)
+response.raise_for_status()  # Ensure the request is successful
 
-### Scripting Title of the enforcement action
-# Find all elements that are headings (h1 to h6)
-headings = soup.find_all(re.compile('^h[1-6]$'))
+# Parse the HTML content
+soup = BeautifulSoup(response.text, 'html.parser')
 
-# Create a list to hold all extracted headings
-extracted_headings = []
-for heading in headings:
-    extracted_headings.append((heading.name, heading.get_text(strip=True)))
+# Find all enforcement action cards
+entries = soup.select('li.usa-card')
 
-# Print out all headings found
-for tag, text in extracted_headings:
-    print(f'{tag}: {text}')
+for entry in entries:
+    title_anchor = entry.select_one('h2.usa-card__heading a')
+    if not title_anchor:
+        print("Debug: Title anchor not found. Here's the entry HTML:")
+        print(entry)  # Show the HTML content of the entry if the title anchor isn't found.
+        continue  # Skip to the next entry if no title anchor is found.
 
+    title = title_anchor.text.strip() if title_anchor else 'No Title Listed'
+    relative_link = title_anchor['href'] if title_anchor else 'No Link Available'
+    full_link = requests.compat.urljoin(base_url, relative_link)  # Create full URL from base and relative link
+    date = entry.select_one('span.text-base-dark.padding-right-105').text.strip() if entry.select_one('span.text-base-dark.padding-right-105') else 'No Date Listed'
+    category_list = [category.text.strip() for category in entry.select('ul.display-inline.add-list-reset li')]
 
-### Scripting Date
-def scrape_dates():
-    # URL of the page you want to scrape
-    url = 'https://oig.hhs.gov/fraud/enforcement/'
-    response = requests.get(url)
-    soup = BeautifulSoup(response.text, 'html.parser')
-    
-    # Find all span tags that contain dates
-    date_spans = soup.find_all('span', class_='text-base-dark padding-right-105')
-    
-    # Extract the text from each span tag (the dates)
-    dates = [span.get_text(strip=True) for span in date_spans]
-    
-    # Create a DataFrame to store the collected dates
-    df = pd.DataFrame(dates, columns=['Date'])
+    # Append each item to its respective list
+    titles.append(title)
+    links.append(full_link)
+    dates.append(date)
+    categories.append(', '.join(category_list))  # Join categories to store as a single string per entry
 
-    return df
+    # Print debug info
+    print("Title:", title)
+    print("Link:", full_link)
+    print("Date:", date)
+    print("Category:", ', '.join(category_list))
+    print("---")
 
-# Run the function and print the DataFrame
-df_dates = scrape_dates()
-print(df_dates)
+# Create a DataFrame
+ec = pd.DataFrame({
+    'Title': titles,
+    'Link': links,
+    'Date': dates,
+    'Category': categories
+})
 
-
-def scrape_checkbox_data():
-    # URL
-    url = 'https://oig.hhs.gov/fraud/enforcement/'
-    response = requests.get(url)
-    soup = BeautifulSoup(response.text, 'html.parser')
-    
-    # Extract checkbox related data
-    checkboxes = soup.find_all('input', type='checkbox')
-    data = [{
-        'Type': box.find_next_sibling('label').get_text(strip=True) if box.find_next_sibling('label') else 'No Label',
-        'Link': box.get('value', 'No Link Provided')
-    } for box in checkboxes]
-    
-    # Return as DataFrame
-    return pd.DataFrame(data)
-
-# Run the function and print the DataFrame
-df_checkboxes = scrape_checkbox_data()
-print(df_checkboxes)
-
-def scrape_hyperlinks(url):
-    # Sending a request to the webpage
-    response = requests.get(url)
-    if response.status_code != 200:
-        return pd.DataFrame()  # Return an empty DataFrame if there's an error loading the page
-    
-    # Parsing the HTML content
-    soup = BeautifulSoup(response.text, 'html.parser')
-    
-    # Find all <a> tags
-    links = soup.find_all('a')
-    
-    # Extract the href attribute and text from each <a> tag
-    data = [{
-        'Text': link.get_text(strip=True),
-        'URL': link.get('href')
-    } for link in links if link.get('href')]
-
-    # Create a DataFrame to store the collected data
-    return pd.DataFrame(data)
-
-# Example usage
-base_url = 'https://example.com'  # Replace with the actual URL
-df_links = scrape_hyperlinks(base_url)
-print(df_links)
-
+# Save the DataFrame to CSV
+ec.to_csv('/Users/yuewang1/Desktop/enforcement_actions.csv', index=False)
 ```
-
-
-
 
 ## Q2
 ```{python}
-import requests
-from bs4 import BeautifulSoup
-import pandas as pd
+# Set the target webpage URL
+base_url = 'https://oig.hhs.gov/fraud/enforcement/'
 
-def fetch_agency_names(url):
-    # Send a request to the webpage
-    response = requests.get(url)
-    response.raise_for_status()  # Raises an HTTPError for bad responses
+# Send an HTTP request to the base URL
+response = requests.get(base_url)
+response.raise_for_status()  # Ensure the request is successful
 
-    # Parse the page with BeautifulSoup
-    soup = BeautifulSoup(response.text, 'html.parser')
+# Parse the HTML content
+soup = BeautifulSoup(response.text, 'html.parser')
 
-    # Find all links to enforcement actions, assuming they are contained in <a> tags under a specific class or id
-    links = soup.find_all('a', class_='your-link-class')  # Update 'your-link-class' as necessary
+# Initialize a list to store the data
+data = []
 
-    agencies = []
+# Find all enforcement action cards
+entries = soup.select('li.usa-card')
 
-    # Loop through each link and fetch the agency name
-    for link in links:
-        # Construct the full URL for the enforcement action
-        action_url = url + link.get('href')
+for entry in entries:
+    # Extract the title and link
+    title_anchor = entry.select_one('h2.usa-card__heading a')
+    if not title_anchor:
+        continue  # Skip this entry if no title anchor is found
+    title = title_anchor.text.strip()
+    link = requests.compat.urljoin(base_url, title_anchor['href'])
 
-        # Fetch the detail page
-        detail_response = requests.get(action_url)
-        detail_response.raise_for_status()
+    # Extract the date
+    date = entry.select_one('span.text-base-dark.padding-right-105').text.strip() if entry.select_one('span.text-base-dark.padding-right-105') else 'Date not listed'
 
-        # Parse the detail page
-        detail_soup = BeautifulSoup(detail_response.text, 'html.parser')
+    # Extract the categories
+    category_list = [category.text.strip() for category in entry.select('ul.display-inline.add-list-reset li')]
+    category_text = ', '.join(category_list)
 
-        # Extract the agency name, assuming it's in the third <p> tag under <div class="content">
-        content_div = detail_soup.find('div', class_='content')
-        if content_div:
-            agency_name = content_div.find_all('p')[2].text  # Get the third <p> tag
-            agencies.append(agency_name)
+    # Fetch the detail page to get the agency name
+    detail_response = requests.get(link)
+    detail_response.raise_for_status()
+    detail_soup = BeautifulSoup(detail_response.text, 'html.parser')
 
-    # Create a DataFrame
-    df = pd.DataFrame(agencies, columns=['Agency'])
-    return df
+    # Extract the agency name
+    agency_tag = detail_soup.find(lambda tag: tag.name == 'li' and 'Agency:' in tag.text)
+    agency_name = agency_tag.text.split('Agency:')[-1].strip() if agency_tag else 'Agency not listed'
 
-# URL of the 'Enforcement Actions' page
-url = 'https://oig.hhs.gov/fraud/enforcement/washington-doctor-settles-allegations-he-submitted-false-claims-to-federal-health-care-programs/'
-df_agencies = fetch_agency_names(url)
-print(df_agencies.head())
+    # Add the data to the list
+    data.append({
+        'Title': title,
+        'Link': link,
+        'Date': date,
+        'Category': category_text,
+        'Agency': agency_name
+    })
+
+# Create a DataFrame
+df = pd.DataFrame(data)
+
+# Save to CSV file
+csv_path = '/Users/yuewang1/Desktop/enforcement_actions_details.csv'
+df.to_csv(csv_path, index=False, encoding='utf_8_sig')
+
+print(f"Data has been successfully saved to {csv_path}")
 
 ```
 
